@@ -1,0 +1,53 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: theme-overlay
+stringData:
+  theme-overlay.yaml: |
+    #@ load("@ytt:overlay", "overlay")
+
+    #@overlay/match by=overlay.subset({"kind": "SystemProfile", "metadata": {"name": "tap-system-profile"}})
+    ---
+    spec:
+      #@overlay/match missing_ok=True
+      theme:
+        dashboard:
+          script: |
+            console.log("Dashboard theme overrides.");
+          style: |
+            .header {
+              height: 0;
+              visibility: hidden;
+            } 
+        workshop:
+          script: |
+            console.log("Workshop theme overrides.");
+          style: |
+            div.title {
+              font-family: "Comic Sans MS", "Comic Sans", cursive;
+            }
+        portal:
+          script: |
+            console.log("Portal theme overrides.");
+          style: |
+            .header {
+              height: 0;
+              visibility: hidden;
+            } 
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: learningcenter-package-overlay
+stringData:
+  learningcenter-package-overlay.yaml: |
+    #@ load("@ytt:overlay", "overlay")
+
+    #@overlay/match by=overlay.subset({"kind": "PackageInstall", "metadata": {"name": "learningcenter"}})
+    ---
+    metadata:
+      #@overlay/match missing_ok=True
+      annotations:
+        #@overlay/match missing_ok=True
+        ext.packaging.carvel.dev/ytt-paths-from-secret-name.0: theme-overlay
