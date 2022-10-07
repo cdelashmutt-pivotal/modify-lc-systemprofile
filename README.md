@@ -1,3 +1,5 @@
+**NOTE:** Make sure to read through the instructions before applying anything, as this repo gives instructions for modifying the default theme, as well as creating a new theme that can be used by just some TrainingPortals.
+
 # Modifying the default theme for Learning Center
 ## Overview
 This repository provides an example for leveraging kapp-controller's conventions to add in additional configuration to a PackageInstall object.  The example here allows you to make changes to the default Learning Center configuration to apply small theming changes.
@@ -71,4 +73,69 @@ graph TD;
     theme-overlay[/theme-overlay/] -.- LearningCenter-Packageinstall
     LearningCenter-Packageinstall-->SystemProfile
     spec.theme.dashboard=...[/spec.theme.dashboard=.../] -.- SystemProfile
+```
+
+# Customize Styles for Some TrainingPortals
+If you just want to have some of your training portals use some custom styling, you can do that fairly easily without having to go through the toil above.
+
+* First, grab a copy of the spec section of the default SystemProfile for TAP
+```
+k get systemprofile tap-system-profile -o yaml | sed -n '/^spec:$/,$p' > new-system-profile.yaml
+```
+* Next, modify the spec to prepend the `apiVersion`, `kind` and `metadata` sections
+```
+apiVersion: learningcenter.tanzu.vmware.com/v1beta1
+kind: SystemProfile
+metadata:
+  name: new-system-profile
+spec:
+  ...
+```
+* Next, at the bottom of the `new-system-profile.yaml` file, add in the extra theme elements:
+```
+apiVersion: learningcenter.tanzu.vmware.com/v1beta1
+kind: SystemProfile
+metadata:
+  name: new-system-profile
+spec:
+  ...
+  theme:
+    dashboard:
+      script: |
+        console.log("Dashboard theme overrides.");
+      style: |
+        .header {
+          height: 0;
+          visibility: hidden;
+        } 
+    workshop:
+      script: |
+        console.log("Workshop theme overrides.");
+      style: |
+        div.title {
+          font-family: "Comic Sans MS", "Comic Sans", cursive;
+        }
+    portal:
+      script: |
+        console.log("Portal theme overrides.");
+      style: |
+        .header {
+          height: 0;
+          visibility: hidden;
+        } 
+```
+* Now, apply this manifest to your cluster:
+```
+kubectl apply -f new-system-profile.yaml
+```
+
+Now you will need to either create or recreate a `TrainingPortal` that references this new `SystemProfile`.  Also, changes you make to the new `SystemProfile` will only take effect on newly created `TrainingPortal` objects.  You can see an example of how to reference this new SystemProfile in the [documentation](https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.2/tap/GUID-learning-center-runtime-environment-system-profile.html#additional-custom-system-profiles-13).
+
+Basically, you need to reference the SystemProfile in your new TrainingPortal like so:
+```
+...
+spec:
+  system:
+    profile: new-system-profile
+...
 ```
